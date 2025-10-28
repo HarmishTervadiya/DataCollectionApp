@@ -27,7 +27,6 @@ export interface Location{
 export interface UserStore{
     user: User | null;
     users: User[];
-    locations: Location[];
     isloading: boolean;
     error: string | null;
     
@@ -38,7 +37,4 @@ export interface UserStore{
     updateUser: (id: string, data: Partial<UserForm>) => Promise<void>;
     deleteUser: (id: string) => Promise<void>;
 
-    fetchLocations: () => Promise<void>;
-    addLocation: (locationName: string) => Promise<void>;
-    deleteLocation: (id: string) => Promise<void>;
 }

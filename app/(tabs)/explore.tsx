@@ -1,41 +1,64 @@
-import { Image } from "expo-image";
-import { Platform, ScrollView, StyleSheet } from "react-native";
+import UserListItem from '@/components/cards/UserListItem';
+import TextInputField from '@/components/inputs/TextInputField';
+import { userStore } from '@/store/user.store';
+import { FlashList } from '@shopify/flash-list';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Collapsible } from "@/components/ui/collapsible";
-import { ExternalLink } from "@/components/external-link";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Fonts } from "@/constants/theme";
-import * as ImagePicker from "expo-image-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
+function ExploreScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { users = [], fetchUsers, isloading = false } = userStore();
 
-export default function TabTwoScreen() {
-  const imagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const filteredUsers = React.useMemo(() => 
+    users.filter(user => 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.mobileNo.toString().includes(searchQuery)
+    ), [users, searchQuery]
+  );
+
+  const handleSearch = React.useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
+
   return (
-    <SafeAreaView>
-      <ScrollView></ScrollView>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInputField
+          label="Search"
+          value={searchQuery}
+          onValueChange={handleSearch}
+          placeholder="Search by name, address, or phone"
+        />
+      </View>
+      
+      <FlashList
+        data={filteredUsers}
+        renderItem={({ item }) => (
+          <UserListItem user={item} />
+        )}
+        contentContainerStyle={styles.listContent}
+        refreshing={isloading}
+        onRefresh={fetchUsers}
+      />
     </SafeAreaView>
   );
 }
+export default ExploreScreen;
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
+  container: {
+    flex: 1,
   },
-  titleContainer: {
-    flexDirection: "row",
-    gap: 8,
+  searchContainer: {
+    padding: 16,
+  },
+  listContent: {
+    paddingVertical: 8,
   },
 });
