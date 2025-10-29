@@ -1,16 +1,18 @@
-// components/UserDataForm.tsx
 import { User, UserForm } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
-    ActivityIndicator,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import TextInputField from "../inputs/TextInputField";
 
@@ -19,7 +21,7 @@ interface Props {
   onSubmit: (data: UserForm) => Promise<boolean>;
   isLoading: boolean;
   submitButtonText: string;
-  formMethods: UseFormReturn<UserForm>; // Receive form methods from parent
+  formMethods: UseFormReturn<UserForm>; 
 }
 
 const UserDataForm = ({
@@ -36,21 +38,18 @@ const UserDataForm = ({
     formState: { errors },
   } = formMethods;
 
-  // State to preview the new image or the existing image
   const [imagePreview, setImagePreview] = useState<string | null>(
     defaultValues?.photo?.url || null
   );
 
   useEffect(() => {
-    // Update image preview when defaultValues change
     setImagePreview(defaultValues?.photo?.url || null);
   }, [defaultValues]);
 
   const onFormSubmit = async (data: UserForm) => {
     const success = await onSubmit(data);
-    
+
     if (success && !defaultValues) {
-      // Only reset image preview on success for "create" forms
       setImagePreview(null);
     }
   };
@@ -78,21 +77,17 @@ const UserDataForm = ({
 
   return (
     <View style={styles.container}>
-      {/* Photo Section - Moved to Top */}
       <View style={styles.formSection}>
         <Text style={styles.sectionTitle}>Photo</Text>
         <View style={styles.imagePickerContainer}>
           {imagePreview && (
             <Image source={{ uri: imagePreview }} style={styles.imagePreview} />
           )}
-          <TouchableOpacity
-            style={styles.imageButton}
-            onPress={selectImage}
-          >
-            <Ionicons 
-              name={imagePreview ? "camera-outline" : "add-circle-outline"} 
-              size={24} 
-              color="#007AFF" 
+          <TouchableOpacity style={styles.imageButton} onPress={selectImage}>
+            <Ionicons
+              name={imagePreview ? "camera-outline" : "add-circle-outline"}
+              size={24}
+              color="#007AFF"
             />
             <Text style={styles.imageButtonText}>
               {imagePreview ? "Change Photo" : "Upload Photo"}
@@ -101,10 +96,8 @@ const UserDataForm = ({
         </View>
       </View>
 
-      {/* Basic Information Section */}
       <View style={styles.formSection}>
-        <Text style={styles.sectionTitle}>Basic Information</Text>
-        
+
         <Controller
           control={control}
           name="name"
@@ -170,6 +163,10 @@ const UserDataForm = ({
 };
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
   container: {
     backgroundColor: "#fff",
     borderRadius: 0,

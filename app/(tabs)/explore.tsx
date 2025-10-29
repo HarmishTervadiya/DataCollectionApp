@@ -1,4 +1,3 @@
-// app/(tabs)/explore.tsx
 import UserListItem from "@/components/cards/UserListItem";
 import UserDetailsModal from "@/components/modals/UserDetailModal";
 import Toast from "@/components/ui/toast";
@@ -7,7 +6,8 @@ import { User, UserForm } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
     ActivityIndicator,
     StyleSheet,
@@ -15,11 +15,29 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { useForm } from "react-hook-form";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const AVATAR_COLORS = [
+  "#9E8747",
+  "#E74C3C",
+  "#3498DB",
+  "#2ECC71",
+  "#F39C12",
+  "#9B59B6",
+  "#1ABC9C",
+  "#E67E22",
+  "#34495E",
+  "#16A085",
+];
+
+const getAvatarColor = (userName: string) => {
+  const hash = userName
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+};
+
 const ExploreScreen = () => {
-  // Store hooks
   const {
     users,
     fetchUsers,
@@ -35,13 +53,10 @@ const ExploreScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // Form methods
   const formMethods = useForm<UserForm>({
     defaultValues: {
       name: "",
@@ -51,7 +66,6 @@ const ExploreScreen = () => {
     },
   });
 
-  // Fetch users when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchUsers();
@@ -59,7 +73,6 @@ const ExploreScreen = () => {
     }, [])
   );
 
-  // Show error toast
   useEffect(() => {
     if (error) {
       setToastMessage(error);
@@ -68,7 +81,6 @@ const ExploreScreen = () => {
     }
   }, [error]);
 
-  // Show success toast
   useEffect(() => {
     if (success) {
       setToastMessage(success);
@@ -86,7 +98,6 @@ const ExploreScreen = () => {
     }
   };
 
-  // Memoized search results
   const filteredUsers = useMemo(() => {
     if (!searchQuery) {
       return users;
@@ -94,15 +105,13 @@ const ExploreScreen = () => {
     return users.filter(
       (user) =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.mobileNo.toString().includes(searchQuery)
+        user.mobileNo.toString().includes(searchQuery) || user.address.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [users, searchQuery]);
 
-  // Open modal with user data
   const handleUserPress = useCallback((user: User) => {
     setSelectedUser(user);
     setModalVisible(true);
-    // Reset form with user data
     formMethods.reset({
       name: user.name,
       mobileNo: user.mobileNo,
@@ -111,7 +120,6 @@ const ExploreScreen = () => {
     });
   }, [formMethods]);
 
-  // Close modal and reset
   const handleCloseModal = useCallback(() => {
     setModalVisible(false);
     setSelectedUser(null);
@@ -123,16 +131,19 @@ const ExploreScreen = () => {
     });
   }, [formMethods]);
 
-  // Render list item
   const renderUser = useCallback(
     ({ item }: { item: User }) => (
-      <UserListItem item={item} onPress={handleUserPress} />
+      <UserListItem 
+        item={item} 
+        onPress={handleUserPress}
+        avatarColor={getAvatarColor(item.name)}
+      />
     ),
     [handleUserPress]
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <Toast
         message={toastMessage}
         type={toastType}
@@ -140,7 +151,6 @@ const ExploreScreen = () => {
         onHide={handleToastHide}
       />
       <View style={styles.container}>
-        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons
             name="search"
@@ -156,7 +166,6 @@ const ExploreScreen = () => {
           />
         </View>
 
-        {/* User List */}
         {isloading && users.length === 0 ? (
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
@@ -164,14 +173,14 @@ const ExploreScreen = () => {
             data={filteredUsers}
             renderItem={renderUser}
             keyExtractor={(item) => item.id}
-            // estimatedItemSize={82}
+            refreshing={isloading}
+            onRefresh={fetchUsers}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No users found.</Text>
             }
           />
         )}
 
-        {/* Details Modal */}
         {selectedUser && (
           <UserDetailsModal
             visible={modalVisible}
@@ -182,6 +191,7 @@ const ExploreScreen = () => {
             updateUser={updateUser}
             isloading={isloading}
             success={success}
+            avatarColor={getAvatarColor(selectedUser.name)}
           />
         )}
       </View>

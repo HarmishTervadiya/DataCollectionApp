@@ -28,7 +28,28 @@ interface Props {
   updateUser: (id: string, data: Partial<UserForm>) => Promise<boolean>;
   isloading: boolean;
   success: string | null;
+  avatarColor: string;
 }
+
+const AVATAR_COLORS = [
+  "#9E8747",
+  "#E74C3C",
+  "#3498DB",
+  "#2ECC71",
+  "#F39C12",
+  "#9B59B6",
+  "#1ABC9C",
+  "#E67E22",
+  "#34495E",
+  "#16A085",
+];
+
+const getAvatarColor = (userName: string) => {
+  const hash = userName
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+};
 
 const UserDetailsModal = ({
   user,
@@ -43,11 +64,9 @@ const UserDetailsModal = ({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    // Reset editing state when the user prop changes
     setIsEditing(false);
   }, [user?.id]);
 
-  // Effect to auto-close the modal on successful DELETE
   useEffect(() => {
     if (success && !isEditing && !isloading) {
       const timer = setTimeout(() => {
@@ -74,12 +93,15 @@ const UserDetailsModal = ({
     );
   };
 
-  const handleUpdate = async (data: UserForm) => {
+  const handleUpdate = async (data: UserForm): Promise<boolean> => {
     const updateSuccess = await updateUser(user.id, data);
     if (updateSuccess) {
       setIsEditing(false);
     }
+    return updateSuccess;
   };
+
+  const avatarColor = getAvatarColor(user.name);
 
   return (
     <Modal
@@ -88,7 +110,7 @@ const UserDetailsModal = ({
       onRequestClose={onClose}
       presentationStyle="pageSheet"
     >
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>
             {isEditing ? "Edit User" : "User Details"}
@@ -99,17 +121,22 @@ const UserDetailsModal = ({
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
-          {/* VIEW MODE */}
           {!isEditing && (
             <View style={styles.viewContainer}>
-              <Image
-                source={
-                  user.photo?.url
-                    ? { uri: user.photo.url }
-                    : require("@/assets/images/icon.png")
-                }
-                style={styles.avatar}
-              />
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: user.photo?.url ? "transparent" : avatarColor },
+                ]}
+              >
+                {user.photo?.url ? (
+                  <Image source={{ uri: user.photo.url }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {user.name.charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </View>
               <Text style={styles.name}>{user.name}</Text>
 
               <View style={styles.infoBox}>
@@ -139,7 +166,6 @@ const UserDetailsModal = ({
             </View>
           )}
 
-          {/* EDIT MODE */}
           {isEditing && (
             <UserDataForm
               key={user.id}
@@ -226,8 +252,19 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#eee",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 60,
+  },
+  avatarText: {
+    color: "#fff",
+    fontSize: 36,
+    fontWeight: "bold",
   },
   name: {
     fontSize: 24,

@@ -1,4 +1,3 @@
-// components/UserListItem.tsx
 import React, { memo } from "react";
 import {
   View,
@@ -8,26 +7,30 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { User } from "@/types";
-import { Ionicons } from "@expo/vector-icons"; // Assuming you have expo-vector-icons
+import { Ionicons } from "@expo/vector-icons";
 import { handleCall } from "@/utils/handleCall";
 
 interface Props {
   item: User;
   onPress: (item: User) => void;
+  avatarColor: string;
 }
 
-// Use memo for performance optimization in FlashList
-const UserListItem = ({ item, onPress }: Props) => {
+const UserListItem = ({ item, onPress, avatarColor }: Props) => {
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(item)}>
-      <Image
-        source={
-          item.photo?.url
-            ? { uri: item.photo.url }
-            : require("@/assets/images/icon.png") // Fallback image
-        }
-        style={styles.avatar}
-      />
+      {item.photo?.url ? (
+        <Image
+          source={{ uri: item.photo.url }}
+          style={styles.avatar}
+        />
+      ) : (
+        <View style={[styles.avatarContainer, { backgroundColor: avatarColor }]}>
+          <Text style={styles.avatarText}>
+            {item.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.mobile}>{item.mobileNo}</Text>
@@ -57,6 +60,19 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 16,
     backgroundColor: "#eee",
+  },
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   infoContainer: {
     flex: 1,

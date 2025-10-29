@@ -1,10 +1,9 @@
-// store/user.store.ts
 import { supabase } from "@/supabase/supabase";
-import { UserForm, UserStore } from "@/types"; // Added Location
+import { UserForm, UserStore } from "@/types"; 
 import { create } from "zustand";
 
-export const userStore = create<UserStore>((set, get) => ({ // Added 'get'
-  user: null, // Default to null
+export const userStore = create<UserStore>((set, get) => ({ 
+  user: null,
   users: [],
   isloading: false,
   error: null,
@@ -20,7 +19,7 @@ export const userStore = create<UserStore>((set, get) => ({ // Added 'get'
       set({ isloading: true, error: null, success: null });
       let imageUrl = "";
       let imageRes = null;
-      if (data.photo !== "") {
+      if (data.photo && data.photo.mimeType !== "" ) {
         imageRes = await supabase.storage
           .from("user-photos")
           .upload(
@@ -41,17 +40,19 @@ export const userStore = create<UserStore>((set, get) => ({ // Added 'get'
       }
 
       const response = await supabase.from("users").insert({
-        name: data.name,
+        name: data.name.trim(),
         mobileNo: data.mobileNo,
-        address: data.address,
+        address: data.address.trim(),
         photo: { url: imageUrl, path: imageRes?.data.path || "" },
-      }).select().single(); // Use .select().single() to get the new row
+      }).select().single(); 
 
       if (response.error) {
+        if (imageRes?.data?.path) {
+          await supabase.storage.from("user-photos").remove([imageRes.data.path]);
+        }
         throw response.error;
       }
       
-      // Optimistic update: add new user to state
       set((state) => ({ users: [...state.users, response.data] }));
       set({ success: "User added successfully!" });
       return true;
@@ -69,18 +70,16 @@ export const userStore = create<UserStore>((set, get) => ({ // Added 'get'
       set({ isloading: true, error: null, success: null });
       let imageUrl = "";
       let imageRes = null;
-      const currentUser = get().users.find((u) => u.id === id); // Use get()
+      const currentUser = get().users.find((u) => u.id === id); 
 
-      // Handle photo update if provided
       if (data.photo && typeof data.photo !== "string") {
-        // Delete old photo if exists
+      
         if (currentUser?.photo?.path) {
           await supabase.storage
             .from("user-photos")
             .remove([currentUser.photo.path]);
         }
 
-        // Upload new photo
         imageRes = await supabase.storage
           .from("user-photos")
           .upload(
@@ -179,7 +178,6 @@ export const userStore = create<UserStore>((set, get) => ({ // Added 'get'
         throw response.error;
       }
       
-      console.log("Data Retrieved:", response.data);
       set({ users: response.data || [] });
     } catch (error) {
       console.error("Error fetching users:", error);

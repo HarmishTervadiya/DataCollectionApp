@@ -1,29 +1,38 @@
-// app/(tabs)/index.tsx
+import StatsCard from "@/components/cards/StatCard";
+import UserDataForm from "@/components/forms/UserDataForm";
+import Toast from "@/components/ui/toast";
 import { userStore } from "@/store/user.store";
+import { UserForm } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import StatsCard from "@/components/cards/StatCard";
-import UserDataForm from "@/components/forms/UserDataForm";
-import Toast from "@/components/ui/toast";
-import { UserForm } from "@/types";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useForm } from "react-hook-form";
-import { Ionicons } from "@expo/vector-icons";
 
 const HomeScreen = () => {
-  const { users, fetchUsers, addUser, isloading, error, success, clearError, clearSuccess } = userStore();
+  const {
+    users,
+    fetchUsers,
+    addUser,
+    isloading,
+    error,
+    success,
+    clearError,
+    clearSuccess,
+  } = userStore();
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // Lift form hooks to parent component
   const formMethods = useForm<UserForm>({
     defaultValues: {
       name: "",
@@ -36,7 +45,6 @@ const HomeScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       fetchUsers();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -68,61 +76,63 @@ const HomeScreen = () => {
   const onAddUser = async (data: UserForm) => {
     const result = await addUser(data);
     if (result) {
-      // Reset form on success
       formMethods.reset();
     }
     return result;
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <Toast
         message={toastMessage}
         type={toastType}
         visible={toastVisible}
         onHide={handleToastHide}
       />
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={isloading} onRefresh={fetchUsers} />
-        }
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
       >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          refreshControl={
+            <RefreshControl refreshing={isloading} onRefresh={fetchUsers} />
+          }
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>Overview</Text>
+            <View style={styles.statsRow}>
+              <StatsCard title="Total Users" value={users.length} />
+              <StatsCard
+                title="Added Today"
+                value={
+                  users.filter((u) => {
+                    const today = new Date().toDateString();
+                    return new Date(u.createdAt).toDateString() === today;
+                  }).length
+                }
+              />
+            </View>
+          </View>
 
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={styles.statsRow}>
-            <StatsCard 
-              title="Total Users" 
-              value={users.length}
-            />
-            <StatsCard 
-              title="Active Today" 
-              value={users.filter(u => {
-                const today = new Date().toDateString();
-                return new Date(u.createdAt).toDateString() === today;
-              }).length}
-            />
+          <View style={styles.formSection}>
+            <View style={styles.formHeader}>
+              <Ionicons name="person-add" size={24} color="#007AFF" />
+              <Text style={styles.formTitle}>Add New User</Text>
+            </View>
+            <View style={styles.formCard}>
+              <UserDataForm
+                onSubmit={onAddUser}
+                isLoading={isloading}
+                submitButtonText="Create User"
+                formMethods={formMethods}
+              />
+            </View>
           </View>
-        </View>
-
-        {/* Add User Form Section */}
-        <View style={styles.formSection}>
-          <View style={styles.formHeader}>
-            <Ionicons name="person-add" size={24} color="#007AFF" />
-            <Text style={styles.formTitle}>Add New User</Text>
-          </View>
-          <View style={styles.formCard}>
-            <UserDataForm
-              onSubmit={onAddUser}
-              isLoading={isloading}
-              submitButtonText="Create User"
-              formMethods={formMethods}
-            />
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -200,4 +210,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen
+export default HomeScreen;

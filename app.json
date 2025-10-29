@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "MyDataCenter",
+    "name": "Sangathan",
     "slug": "MyDataCenter",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/android-icon-foreground.png",
     "scheme": "mydatacenter",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -48,8 +48,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/android-icon-foreground.png",
+          "imageWidth": 120,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
