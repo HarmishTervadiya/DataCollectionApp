@@ -1,84 +1,76 @@
-import { useThemeColor } from '@/hooks/use-theme-color';
-import React from 'react';
-import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
-import { ThemedText } from '../themed-text';
+// components/inputs/TextInputField.tsx
+import React from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  KeyboardTypeOptions,
+} from "react-native";
 
-interface TextInputFieldProps extends Omit<TextInputProps, 'onChangeText'> {
-    label: string;
-    value: string;
-    onValueChange: (value: string) => void;
-    error?: string;
-    required?: boolean;
+interface Props {
+  label: string;
+  value: string;
+  onValueChange: (text: string) => void;
+  placeholder?: string;
+  keyboardType?: KeyboardTypeOptions;
+  secureTextEntry?: boolean;
+  error?: string;
 }
 
 const TextInputField = ({
-    label,
-    value,
-    onValueChange,
-    error,
-    required = false,
-    ...props
-}: TextInputFieldProps) => {
-    const backgroundColor = useThemeColor({}, 'background')
-    const textColor = useThemeColor({}, 'text')
-    const borderColor = useThemeColor({}, error ? 'error' : 'border')
-
-    return (
-        <View style={styles.container}>
-            <View style={styles.labelContainer}>
-                <ThemedText style={styles.label}>{label}</ThemedText>
-                {required && <ThemedText style={styles.required}>*</ThemedText>}
-            </View>
-            <TextInput
-                style={[
-                    styles.input,
-                    {
-                        backgroundColor,
-                        color: textColor,
-                        borderColor,
-                    },
-                ]}
-                value={value}
-                onChangeText={onValueChange}
-                placeholderTextColor="#666"
-                {...props}
-            />
-            {error && (
-                <ThemedText style={styles.errorText}>{error}</ThemedText>
-            )}
-        </View>
-    )
-}
-
-export default TextInputField
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  keyboardType = "default",
+  secureTextEntry = false,
+  error,
+}: Props) => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={[styles.input, error ? styles.inputError : null]}
+        value={value}
+        onChangeText={onValueChange}
+        placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize="none"
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-    container: {
-        marginBottom: 16,
-    },
-    labelContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 4,
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    required: {
-        color: '#FF4444',
-        marginLeft: 4,
-    },
-    input: {
-        height: 44,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        fontSize: 16,
-    },
-    errorText: {
-        color: '#FF4444',
-        fontSize: 12,
-        marginTop: 4,
-    },
-})
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 6,
+    fontWeight: "500",
+  },
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: "#e53e3e",
+  },
+  errorText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#e53e3e",
+  },
+});
+
+export default TextInputField;

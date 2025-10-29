@@ -1,74 +1,46 @@
-import { useThemeColor } from '@/hooks/use-theme-color';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '../themed-text';
-import { ThemedView } from '../themed-view';
+// components/StatsCard.tsx
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
-type StatsCardProps = {
+interface Props {
   title: string;
   value: string | number;
-  icon?: React.ReactNode;
-  color?: string;
-  subtitle?: string;
-};
+}
 
-const StatsCard = ({
-  title,
-  value,
-  icon,
-  color = '#3B82F6',
-  subtitle,
-}: StatsCardProps) => {
-  const borderColor = useThemeColor({}, 'border');
-  
+const StatsCard = ({ title, value }: Props) => {
   return (
-    <ThemedView style={[styles.card, { borderColor }]}>
-      <View style={styles.header}>
-        {icon && (
-          <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
-            {icon}
-          </View>
-        )}
-        <ThemedText style={styles.title}>{title}</ThemedText>
-      </View>
-      <ThemedText style={[styles.value, { color }]}>{value}</ThemedText>
-      {subtitle && <ThemedText style={styles.subtitle}>{subtitle}</ThemedText>}
-    </ThemedView>
+    <View style={styles.card}>
+      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.title}>{title}</Text>
+    </View>
   );
 };
-
-export default StatsCard;
 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minWidth: 150,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+    margin: 8,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+  value: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#1a1a1a",
   },
   title: {
     fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  value: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    color: "#666",
+    marginTop: 4,
   },
 });
+
+export default StatsCard;

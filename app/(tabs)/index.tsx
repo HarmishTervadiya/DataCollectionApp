@@ -1,73 +1,203 @@
-import StatsCard from '@/components/cards/StatCard';
-import UserForm from '@/components/forms/UserForm';
-import { ThemedText } from '@/components/themed-text';
-import { userStore } from '@/store/user.store';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// app/(tabs)/index.tsx
+import { userStore } from "@/store/user.store";
+import { useFocusEffect } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import StatsCard from "@/components/cards/StatCard";
+import UserDataForm from "@/components/forms/UserDataForm";
+import Toast from "@/components/ui/toast";
+import { UserForm } from "@/types";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useForm } from "react-hook-form";
+import { Ionicons } from "@expo/vector-icons";
 
-function HomeScreen() {
-  const { users, isloading = false, fetchUsers } = userStore();
+const HomeScreen = () => {
+  const { users, fetchUsers, addUser, isloading, error, success, clearError, clearSuccess } = userStore();
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+
+  // Lift form hooks to parent component
+  const formMethods = useForm<UserForm>({
+    defaultValues: {
+      name: "",
+      mobileNo: undefined,
+      address: "",
+      photo: "",
+    },
+  });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUsers();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   useEffect(() => {
-    fetchUsers?.();
-  }, [fetchUsers]);
+    if (error) {
+      setToastMessage(error);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  }, [error]);
 
-  const stats = useMemo(() => {
-    const activeUsers = users?.length ?? 0;
-    const recentUsers = users?.filter(
-      user => new Date(user?.createdAt ?? 0).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
-    )?.length ?? 0;
-    return { activeUsers, recentUsers };
-  }, [users]);
+  useEffect(() => {
+    if (success) {
+      setToastMessage(success);
+      setToastType("success");
+      setToastVisible(true);
+    }
+  }, [success]);
+
+  const handleToastHide = () => {
+    setToastVisible(false);
+    if (toastType === "error") {
+      clearError();
+    } else {
+      clearSuccess();
+    }
+  };
+
+  const onAddUser = async (data: UserForm) => {
+    const result = await addUser(data);
+    if (result) {
+      // Reset form on success
+      formMethods.reset();
+    }
+    return result;
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.statsContainer}>
-          <StatsCard
-            title="Total Users"
-            value={stats.activeUsers}
-            icon={<Ionicons name="people-outline" size={24} color="#3B82F6" />}
-            color="#3B82F6"
-          />
-          <StatsCard
-            title="New This Week"
-            value={stats.recentUsers}
-            icon={<Ionicons name="trending-up-outline" size={24} color="#10B981" />}
-            color="#10B981"
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={toastVisible}
+        onHide={handleToastHide}
+      />
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={isloading} onRefresh={fetchUsers} />
+        }
+      >
+
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <View style={styles.statsRow}>
+            <StatsCard 
+              title="Total Users" 
+              value={users.length}
+            />
+            <StatsCard 
+              title="Active Today" 
+              value={users.filter(u => {
+                const today = new Date().toDateString();
+                return new Date(u.createdAt).toDateString() === today;
+              }).length}
+            />
+          </View>
         </View>
-        
-        <View style={styles.formContainer}>
-          <ThemedText style={styles.formTitle}>Add New User</ThemedText>
-          <UserForm />
+
+        {/* Add User Form Section */}
+        <View style={styles.formSection}>
+          <View style={styles.formHeader}>
+            <Ionicons name="person-add" size={24} color="#007AFF" />
+            <Text style={styles.formTitle}>Add New User</Text>
+          </View>
+          <View style={styles.formCard}>
+            <UserDataForm
+              onSubmit={onAddUser}
+              isLoading={isloading}
+              submitButtonText="Create User"
+              formMethods={formMethods}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
   container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 16,
     padding: 16,
-    flexWrap: 'wrap',
+    paddingBottom: 32,
   },
-  formContainer: {
-    padding: 16,
+  headerSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingVertical: 8,
+  },
+  greeting: {
+    fontSize: 14,
+    color: "#6c757d",
+    marginBottom: 4,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#212529",
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#e7f3ff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  statsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#212529",
+    marginBottom: 12,
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  formSection: {
+    marginTop: 8,
+  },
+  formHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
   },
   formTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: "600",
+    color: "#212529",
+  },
+  formCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
 });
+
+export default HomeScreen

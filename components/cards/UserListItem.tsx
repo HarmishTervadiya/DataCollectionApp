@@ -1,121 +1,79 @@
-import { useThemeColor } from '@/hooks/use-theme-color'
-import { User } from '@/types'
-import { Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
-import React from 'react'
-import { Linking, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { ThemedText } from '../themed-text'
-import { ThemedView } from '../themed-view'
+// components/UserListItem.tsx
+import React, { memo } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { User } from "@/types";
+import { Ionicons } from "@expo/vector-icons"; // Assuming you have expo-vector-icons
+import { handleCall } from "@/utils/handleCall";
 
-interface UserListItemProps {
-    user: User
-    onPress?: () => void
+interface Props {
+  item: User;
+  onPress: (item: User) => void;
 }
 
-const UserListItem = ({ user, onPress }: UserListItemProps) => {
-    const iconColor = useThemeColor({}, 'icon')
-    const tintColor = useThemeColor({}, 'tint')
-
-    const handleCall = async () => {
-        const phoneNumber = `tel:${user.mobileNo}`
-        const supported = await Linking.canOpenURL(phoneNumber)
-        
-        if (supported) {
-            await Linking.openURL(phoneNumber)
-        } else {
-            console.error('Phone number is not supported')
+// Use memo for performance optimization in FlashList
+const UserListItem = ({ item, onPress }: Props) => {
+  return (
+    <TouchableOpacity style={styles.container} onPress={() => onPress(item)}>
+      <Image
+        source={
+          item.photo?.url
+            ? { uri: item.photo.url }
+            : require("@/assets/images/icon.png") // Fallback image
         }
-    }
-
-    return (
-        <TouchableOpacity onPress={onPress}>
-            <ThemedView style={styles.container}>
-                <View style={styles.leftContent}>
-                    {user.photo?.url ? (
-                        <Image
-                            source={{ uri: user.photo.url }}
-                            style={styles.avatar}
-                            contentFit="cover"
-                            transition={200}
-                        />
-                    ) : (
-                        <View style={[styles.avatar, styles.placeholderAvatar]}>
-                            <ThemedText style={styles.avatarText}>
-                                {user.name.charAt(0).toUpperCase()}
-                            </ThemedText>
-                        </View>
-                    )}
-                    <View style={styles.info}>
-                        <ThemedText style={styles.name}>{user.name}</ThemedText>
-                        <ThemedText style={styles.phone}>{user.mobileNo}</ThemedText>
-                        <ThemedText style={styles.address} numberOfLines={1}>
-                            {user.address}
-                        </ThemedText>
-                    </View>
-                </View>
-                <TouchableOpacity
-                    style={styles.callButton}
-                    onPress={handleCall}
-                >
-                    <Ionicons name="call-outline" size={24} color={tintColor} />
-                </TouchableOpacity>
-            </ThemedView>
-        </TouchableOpacity>
-    )
-}
-
-export default UserListItem
+        style={styles.avatar}
+      />
+      <View style={styles.infoContainer}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.mobile}>{item.mobileNo}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.callButton}
+        onPress={() => handleCall(item.mobileNo)}
+      >
+        <Ionicons name="call" size={24} color="#007AFF" />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        marginHorizontal: 16,
-        marginVertical: 8,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#E4E7EB',
-        justifyContent: 'space-between',
-    },
-    leftContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
-    placeholderAvatar: {
-        backgroundColor: '#E4E7EB',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    avatarText: {
-        fontSize: 20,
-        fontWeight: '600',
-    },
-    info: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    name: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 2,
-    },
-    phone: {
-        fontSize: 14,
-        opacity: 0.8,
-        marginBottom: 2,
-    },
-    address: {
-        fontSize: 12,
-        opacity: 0.6,
-    },
-    callButton: {
-        padding: 8,
-    },
-})
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 16,
+    backgroundColor: "#eee",
+  },
+  infoContainer: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111",
+  },
+  mobile: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 4,
+  },
+  callButton: {
+    padding: 8,
+  },
+});
+
+export default memo(UserListItem);

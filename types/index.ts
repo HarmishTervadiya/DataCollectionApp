@@ -16,12 +16,7 @@ export interface UserForm{
     name: string;
     mobileNo: number;
     address: string;
-    photo: { fileBody: ArrayBuffer, mimeType: string } | "";
-}
-
-export interface Location{
-    id: string;
-    locationName: string;
+    photo: { fileBody: ArrayBuffer, mimeType: string } | "" | undefined;
 }
 
 export interface UserStore{
@@ -29,12 +24,15 @@ export interface UserStore{
     users: User[];
     isloading: boolean;
     error: string | null;
+    success: string | null;
     
     setUser: (user: User | null) => void;
+    clearError: () => void;
+    clearSuccess: () => void;
 
     fetchUsers: () => Promise<void>;
-    addUser: (data: UserForm) => Promise<void>;
-    updateUser: (id: string, data: Partial<UserForm>) => Promise<void>;
-    deleteUser: (id: string) => Promise<void>;
+    addUser: (data: UserForm) => Promise<boolean>;
+    updateUser: (id: string, data: Partial<UserForm>) => Promise<boolean>;
+    deleteUser: (id: string) => Promise<boolean>;
 
 }
